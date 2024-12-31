@@ -41,3 +41,30 @@ def percentile(column: pd.Series, percentile: int) -> int :
     Return : index of the percentile asked
     """
     pass
+
+
+def normalizePdSeries(variable : pd.Series, parameters : pd.Series) -> pd.Series :
+    """
+    Function to calculate the mean and std of a given variable from its different values
+    Parameters : a pd.Series object
+    Return : a new pd.Series containing the normalized values of the variable
+    """ 
+    variableNormalized = (variable - parameters['mean']) / parameters['std']
+    return variableNormalized
+
+
+def extractNormalizedNumericalDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame] :
+    """
+    Function that extract numerical datas, normalized it and return the normalized datas
+    Parameters : a pd.DataFrame object
+    Return : a new dataFrame containing only numerical datas and a dataFrame containing 
+    mean and std parameters for later denormalization
+    """
+    numericalDf = df.select_dtypes(include=['int64', 'float64'])
+
+    # ... implement code to normalize each column of numerical datas  ...
+    # normalizedDatas = 
+    # parameters =
+    # normalizationParameters = pd.DataFrame(parameters, index=['mean', 'std'])
+    # 
+    # return normalizedDatas, normalizationParameters

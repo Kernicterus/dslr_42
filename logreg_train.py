@@ -48,6 +48,7 @@ def main():
         print(csv['Astronomy'])
         csv['Astronomy'] = ds.normalizePdSeries(csv['Astronomy'], normalizationParameters['Astronomy'])
         csv['Herbology'] = ds.normalizePdSeries(csv['Herbology'], normalizationParameters['Herbology'])
+        print(csv['Astronomy'])
 
         #  -----
         

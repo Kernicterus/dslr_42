@@ -45,8 +45,8 @@ def percentile(column: pd.Series, percentile: int) -> int :
 
 def normalizePdSeries(variable : pd.Series, parameters : pd.Series) -> pd.Series :
     """
-    Function to calculate the mean and std of a given variable from its different values
-    Parameters : a pd.Series object
+    Function to standardize a given variable from its different values
+    Parameters : a pd.Series object containing the mean and std of the variable
     Return : a new pd.Series containing the normalized values of the variable
     """ 
     variableNormalized = (variable - parameters['mean']) / parameters['std']

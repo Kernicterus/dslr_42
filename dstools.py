@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def load_csv(path: str) -> pd.DataFrame:
     """
@@ -62,9 +63,34 @@ def extractNormalizedNumericalDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd
     """
     numericalDf = df.select_dtypes(include=['int64', 'float64'])
 
-    # ... implement code to normalize each column of numerical datas  ...
-    # normalizedDatas = 
-    # parameters =
-    # normalizationParameters = pd.DataFrame(parameters, index=['mean', 'std'])
-    # 
-    # return normalizedDatas, normalizationParameters
+    normalizedDatas = 
+    parameters =
+    normalizationParameters = pd.DataFrame(parameters, index=['mean', 'std'])
+    return normalizedDatas, normalizationParameters
+
+def sigmoid(z):
+    """
+    Function that calculates the sigmoid of a given value
+    alias g(z) and returns it
+    """    
+    return 1 / (1 + np.exp(-z))
+
+
+def predictionH0(weights : pd.Series, dfLine : pd.Series):
+    """
+    Function that calculates h0(x)
+    by sending 0Tx to the sigmoid function
+    which is the dot product of the weights and the datas
+    requirements : 
+        - df must only contain normalized numerical datas useful for the prediction
+            AND a column of '1' must be added at index 0 for the interception
+        - weights must contain the weights calculated for each variable 
+            + the interception at index 0 
+    """
+
+    if len(weights) != len(dfLine) :
+        raise ValueError("The number of weights must be equal to the number")
+    if dfLine['intercept'] != 1:
+        raise ValueError("The first column of the datas must be '1' for product with interception")
+    thetaTx = np.dot(weights, dfLine)
+    return sigmoid(thetaTx)

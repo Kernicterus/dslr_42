@@ -54,19 +54,28 @@ def normalizePdSeries(variable : pd.Series, parameters : pd.Series) -> pd.Series
     return variableNormalized
 
 
-def extractNormalizedNumericalDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame] :
+def extractAndPrepareNumericalDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame] :
     """
-    Function that extract numerical datas, normalized it and return the normalized datas
+    Function that extract numerical datas, filled missing values with median and normalize datas
     Parameters : a pd.DataFrame object
     Return : a new dataFrame containing only numerical datas and a dataFrame containing 
-    mean and std parameters for later denormalization
+    mean and std parameters for each variable
     """
     numericalDf = df.select_dtypes(include=['int64', 'float64'])
+    numericalDf = numericalDf.drop(columns=['Index'])
+    parameters = pd.DataFrame(columns=numericalDf.columns, index=['mean', 'std', 'median'])
+    for column in numericalDf.columns:
+        # CHANGER AVES NOS PROPRES FONCTIONS
+        median = numericalDf[column].median()
+        mean = numericalDf[column].mean()
+        std = numericalDf[column].std()
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        numericalDf[column] = numericalDf[column].fillna(median)
+        parameters[column] = [mean, std, median]
+    for column in numericalDf.columns:
+        numericalDf[column] = normalizePdSeries(numericalDf[column], parameters[column])
+    return numericalDf, parameters
 
-    normalizedDatas = 
-    parameters =
-    normalizationParameters = pd.DataFrame(parameters, index=['mean', 'std'])
-    return normalizedDatas, normalizationParameters
 
 def sigmoid(z):
     """
@@ -90,7 +99,32 @@ def predictionH0(weights : pd.Series, dfLine : pd.Series):
 
     if len(weights) != len(dfLine) :
         raise ValueError("The number of weights must be equal to the number")
-    if dfLine['intercept'] != 1:
+    if dfLine[0] != 1:
         raise ValueError("The first column of the datas must be '1' for product with interception")
     thetaTx = np.dot(weights, dfLine)
     return sigmoid(thetaTx)
+
+def extractAndPrepareDiscreteDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Function that extract discrete datas and numerize them
+    Parameters : a pd.DataFrame object
+    Return : a pd.DataFrame object containing the numerized datas
+    """
+    discreteDatas = df.select_dtypes(include=['object'])
+    discreteDatas[['year', 'month', 'day']] = discreteDatas['Birthday'].str.split('-', expand=True)
+    discreteDatas = discreteDatas.drop(columns=['Hogwarts House'])
+    discreteDatas = discreteDatas.drop(columns=['Birthday'])
+
+    parameters = pd.DataFrame(columns=discreteDatas.columns, index=['mean', 'std', 'median'])
+    discreteDatas = discreteDatas.apply(lambda x: x.astype('category').cat.codes)
+    for column in discreteDatas.columns:
+        # CHANGER AVES NOS PROPRES FONCTIONS
+        median = discreteDatas[column].median()
+        mean = discreteDatas[column].mean()
+        std = discreteDatas[column].std()
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        discreteDatas[column] = discreteDatas[column].fillna(mean)
+        parameters[column] = [mean, std, median]
+    for column in discreteDatas.columns:
+        discreteDatas[column] = normalizePdSeries(discreteDatas[column], parameters[column])
+    return discreteDatas, parameters

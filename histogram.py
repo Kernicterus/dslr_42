@@ -15,6 +15,7 @@ def histogram(data, field):
         plt.hist(Hufflepuff[field], bins=20, alpha=0.4, label='Hufflepuff')
         plt.hist(Slytherin[field], bins=20, alpha=0.4, label='Slytherin')
         plt.xlabel(field)
+        plt.ylabel('Frequency')
         plt.legend()
         plt.show()
 

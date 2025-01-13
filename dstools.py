@@ -60,7 +60,7 @@ def std(column: pd.Series) -> float :
     return math.sqrt(sum / size)
 
 
-def percentile(column: pd.Series, percentile: int) -> int : 
+def percentile(column: pd.Series, percentile: float) -> float : 
     """
     Function that look for the percentile asked for a variable
     Parameters : 
@@ -109,13 +109,11 @@ def extractAndPrepareNumericalDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd
     numericalDf = numericalDf.drop(columns=['Index'])
     parameters = pd.DataFrame(columns=numericalDf.columns, index=['mean', 'std', 'median'])
     for column in numericalDf.columns:
-        # CHANGER AVES NOS PROPRES FONCTIONS
-        median = numericalDf[column].median()
-        mean = numericalDf[column].mean()
-        std = numericalDf[column].std()
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        median = percentile(numericalDf[column], 0.5)
+        m = mean(numericalDf[column])
+        s = std(numericalDf[column])
         numericalDf[column] = numericalDf[column].fillna(median)
-        parameters[column] = [mean, std, median]
+        parameters[column] = [m, s, median]
     for column in numericalDf.columns:
         numericalDf[column] = normalizePdSeries(numericalDf[column], parameters[column])
     return numericalDf, parameters
@@ -172,3 +170,5 @@ def extractAndPrepareDiscreteDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.
     for column in discreteDatas.columns:
         discreteDatas[column] = normalizePdSeries(discreteDatas[column], parameters[column])
     return discreteDatas, parameters
+
+    

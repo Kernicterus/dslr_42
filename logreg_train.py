@@ -11,9 +11,9 @@ ROWS_NAME = [
             'Last Name',
             'Birthday',
             'Best Hand',
-            'Year',
-            'Month',
-            'Day',
+            'year',
+            'month',
+            'day',
             'Arithmancy',
             'Astronomy',
             'Herbology',
@@ -47,22 +47,30 @@ def checkArgs(args : list) -> bool:
         return False
     return True
 
+def denormalizeWeight(weights, params):
+    for feature in weights.index:
+        param_feature = "year" if feature == "Year" else feature
+        if param_feature in params:
+            std = params[param_feature]['std']
+            weights.loc[feature] = weights.loc[feature] / std
+    
+    return weights
 
 def saveDatas(weights : pd.Series, numDatasParams : pd.DataFrame, discreteDatasParams : pd.DataFrame):
     """
     Save weights into a file
     """
     weights.index = [ROWS_NAME[i] for i in weights.index]
+    print(weights)
+    combined_params = {**discreteDatasParams.to_dict(), **numDatasParams.to_dict()}
+    print('Denrmalize = ', denormalizeWeight(weights, combined_params))
+
     json_structure = {"data": weights.to_dict()}
+    print(combined_params)
     with open("training.json", "w") as file:
         json.dump(json_structure, file, indent=4)
-
-    json_structure = {"data": numDatasParams.to_dict()} 
-    with open("parametersNumDatas.json", "w") as file:  
-        json.dump(json_structure, file, indent=4)
-
-    json_structure = {"data": discreteDatasParams.to_dict()} 
-    with open("parametersDiscrDatas.json", "w") as file:  
+    json_structure = {"data": combined_params}
+    with open("all_parameters.json", "w") as file:
         json.dump(json_structure, file, indent=4)
 
 
@@ -122,6 +130,8 @@ def prepareResults(df : pd.DataFrame) -> pd.DataFrame:
     huffl.rename('Hufflepuff', inplace=True)
     results = pd.concat([gryff, slyth, raven, huffl], axis=1)
     return results
+
+    
 
 
 def main():

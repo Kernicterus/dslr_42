@@ -6,6 +6,28 @@ import sys
 import os
 
 ITERATION = 100
+ROWS_NAME = [
+            'First Name',
+            'Last Name',
+            'Birthday',
+            'Best Hand',
+            'Year',
+            'Month',
+            'Day',
+            'Arithmancy',
+            'Astronomy',
+            'Herbology',
+            'Defense Against the Dark Arts',
+            'Divination',
+            'Muggle Studies',
+            'Ancient Runes',
+            'History of Magic',
+            'Transfiguration',
+            'Potions',
+            'Care of Magical Creatures',
+            'Charms',
+            'Flying',
+            ]
 
 def checkArgs(args : list) -> bool:
     if len(args) != 2:
@@ -30,6 +52,7 @@ def saveDatas(weights : pd.Series, numDatasParams : pd.DataFrame, discreteDatasP
     """
     Save weights into a file
     """
+    weights.index = [ROWS_NAME[i] for i in weights.index]
     json_structure = {"data": weights.to_dict()}
     with open("training.json", "w") as file:
         json.dump(json_structure, file, indent=4)

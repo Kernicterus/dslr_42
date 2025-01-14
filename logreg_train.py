@@ -7,6 +7,7 @@ import os
 
 ITERATION = 100
 ROWS_NAME = [
+            'Biais',
             'First Name',
             'Last Name',
             'Best Hand',
@@ -51,6 +52,10 @@ def saveDatas(weights : pd.Series, numDatasParams : pd.DataFrame, discreteDatasP
     Save weights into a file
     """
     weights.index = [ROWS_NAME[i] for i in weights.index]
+    weights = weights.drop(index=['First Name', 'Last Name', 'Year', 'Month', 'Day'])
+    print(discreteDatasParams)
+    discreteDatasParams = discreteDatasParams.drop(columns=['First Name', 'Last Name', 'year', 'month', 'day'])
+    print(discreteDatasParams)
     combined_params = {**discreteDatasParams.to_dict(), **numDatasParams.to_dict()}
     json_structure = {"data": weights.to_dict()}
     with open("training.json", "w") as file:

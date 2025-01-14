@@ -86,7 +86,7 @@ def percentile(column: pd.Series, percentile: float) -> float :
 
     except Exception as e:
         print(f"Error: {e}")
-
+        
 
 def normalizePdSeries(variable : pd.Series, parameters : pd.Series) -> pd.Series :
     """

@@ -1,7 +1,8 @@
 import dstools as ds
 import pandas as pd
 import json
-
+import sys
+import os
 
 HOUSE = [
         'Gryffindor',
@@ -18,6 +19,7 @@ def normalizePdSeries(variable : pd.Series, mean, std) -> pd.Series :
     """ 
     variableNormalized = (variable - mean) / std
     return variableNormalized
+
 
 def extractAndPrepareNumericalDatas(df : pd.DataFrame, trainingParam : pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame] :
     """
@@ -36,6 +38,7 @@ def extractAndPrepareNumericalDatas(df : pd.DataFrame, trainingParam : pd.DataFr
         df[column] = normalizePdSeries(df[column], mean, std)
     return df
 
+
 # Probabilité = 1 / (1 + e^(-z))
 # où z = biais + (poids de Best Hand × valeur normalisée de Best Hand) +
 # (poids d'Arithmancy × valeur normalisée d'Arithmancy) + ...
@@ -44,6 +47,7 @@ def extractAndPrepareNumericalDatas(df : pd.DataFrame, trainingParam : pd.DataFr
 # PUIS on applique la fonction sigmoïde : 1 / (1 + e^(-z))
 
 # La fonction sigmoide transforme le resultat en une probabilite entre 0 et 1
+
 
 def predict(df : pd.DataFrame, weight : pd.DataFrame):
     predictions = pd.Series(index=df.index, dtype='string')
@@ -60,28 +64,23 @@ def predict(df : pd.DataFrame, weight : pd.DataFrame):
     return predictions
 
 
-
-
 def main():
     try :
-        with open('training.json', 'r') as data_file:
+        if len(sys.argv) != 3:
+            return 1
+        with open(sys.argv[2], 'r') as data_file:
             weight = json.load(data_file)
-        entry = ds.load_csv('datasets/dataset_train.csv')
-        parseEntry = entry.drop(columns=['Index', 'Hogwarts House', 'First Name', 'Last Name', 'Birthday'])
+        entry = ds.load_csv(sys.argv[1])
+        parseEntry = entry.drop(columns=['Index', 'Hogwarts House', 'First Name', 'Last Name', 'Birthday', 'Best Hand'])
         with open('all_parameters.json', 'r') as params_file:
             params = json.load(params_file)
         params = pd.DataFrame(params['data'])
         entryNormalized = extractAndPrepareNumericalDatas(parseEntry, params)
-        entryNormalized.to_csv('test/normalizeDataInPredict.csv')
         result = predict(entryNormalized, weight['data'])
         result.to_csv('houses.csv', header=['Hogwarts House'], index=True)
 
     except Exception as e:
         print(f"Error: {e}")
 
-
 if __name__== "__main__":
     main()
-
-
-# Y = x1 * 

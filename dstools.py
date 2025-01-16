@@ -155,30 +155,3 @@ def predictionH0(weights : pd.Series, dfLine : pd.Series):
         raise ValueError("The first column of the datas must be '1' for product with interception")
     thetaTx = np.dot(weights, dfLine)
     return sigmoid(thetaTx)
-
-def extractAndPrepareDiscreteDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Function that extract discrete datas and numerize them
-    Parameters : a pd.DataFrame object
-    Return : a pd.DataFrame object containing the numerized datas
-    """
-    discreteDatas = df.select_dtypes(include=['object'])
-    # discreteDatas[['year', 'month', 'day']] = discreteDatas['Birthday'].str.split('-', expand=True)
-    discreteDatas = discreteDatas.drop(columns=['Hogwarts House'])
-    # discreteDatas = discreteDatas.drop(columns=['Birthday'])
-
-    parameters = pd.DataFrame(columns=discreteDatas.columns, index=['mean', 'std', 'median'])
-    discreteDatas = discreteDatas.apply(lambda x: x.astype('category').cat.codes)
-    for column in discreteDatas.columns:
-        # CHANGER AVES NOS PROPRES FONCTIONS
-        median = discreteDatas[column].median()
-        mean = discreteDatas[column].mean()
-        std = discreteDatas[column].std()
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        discreteDatas[column] = discreteDatas[column].fillna(mean)
-        parameters[column] = [mean, std, median]
-    for column in discreteDatas.columns:
-        discreteDatas[column] = normalizePdSeries(discreteDatas[column], parameters[column])
-    return discreteDatas, parameters
-
-    

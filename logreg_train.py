@@ -6,14 +6,9 @@ import sys
 import os
 
 ITERATION = 100
+
 ROWS_NAME = [
             'Biais',
-            # 'First Name',
-            # 'Last Name',
-            'Best Hand',
-            # 'Year',
-            # 'Month',
-            # 'Day',
             'Arithmancy',
             'Astronomy',
             'Herbology',
@@ -47,20 +42,15 @@ def checkArgs(args : list) -> bool:
         return False
     return True
 
-def saveDatas(weights : pd.Series, numDatasParams : pd.DataFrame, discreteDatasParams : pd.DataFrame):
+def saveDatas(weights : pd.Series, numDatasParams : pd.DataFrame):
     """
     Save weights into a file
     """
     weights.index = [ROWS_NAME[i] for i in weights.index]
-    # weights = weights.drop(index=['First Name', 'Last Name', 'Year', 'Month', 'Day'])
-    # print(discreteDatasParams)
-    # discreteDatasParams = discreteDatasParams.drop(columns=['First Name', 'Last Name', 'year', 'month', 'day'])
-    # print(discreteDatasParams)
-    combined_params = {**discreteDatasParams.to_dict(), **numDatasParams.to_dict()}
     json_structure = {"data": weights.to_dict()}
     with open("training.json", "w") as file:
         json.dump(json_structure, file, indent=4)
-    json_structure = {"data": combined_params}
+    json_structure = {"data": numDatasParams.to_dict()}
     with open("all_parameters.json", "w") as file:
         json.dump(json_structure, file, indent=4)
 
@@ -122,8 +112,6 @@ def prepareResults(df : pd.DataFrame) -> pd.DataFrame:
     results = pd.concat([gryff, slyth, raven, huffl], axis=1)
     return results
 
-    
-
 
 def main():
     try :
@@ -132,21 +120,16 @@ def main():
         
         # step 1 : load the dataset
         df = pd.read_csv(sys.argv[1])
-        df = df.drop(columns=['First Name', 'Last Name', 'Birthday'])
+        df = df.drop(columns=['First Name', 'Last Name', 'Birthday', 'Best Hand'])
         # step 2 : drop the rows with missing values in the Hogwarts House column
         df = df.dropna(subset=['Hogwarts House'])
 
         # step 3 : extraction, numerization, filling missing values (MEDIAN) and  standardization of numerical datas
         normalizedDatas, numDatasParams = ds.extractAndPrepareNumericalDatas(df)
 
-        # step 4 : extraction, numerization, filling missing values (MEAN) and standardization of discrete datas
-        discreteDatas, discreteDatasParams = ds.extractAndPrepareDiscreteDatas(df)
-
-        test = pd.concat([discreteDatas, normalizedDatas], axis=1)
-        test.to_csv('test/normalizeDataInTrain.csv')
         # step 5 : regroup the datas and add the intercept
-        dfWithIntercept = pd.concat([pd.Series([1] * len(df), name='intercept'), normalizedDatas, discreteDatas], axis=1)
-        print(dfWithIntercept)
+        dfWithIntercept = pd.concat([pd.Series([1] * len(df), name='intercept'), normalizedDatas], axis=1)
+
         # step 6: rename the columns of the dataframe with numerical indexes
         dfWithIntercept.columns = range(dfWithIntercept.shape[1])
 
@@ -162,7 +145,7 @@ def main():
         weights.columns = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
 
         # step 9 : save the weights and the parameters
-        saveDatas(weights, numDatasParams, discreteDatasParams)
+        saveDatas(weights, numDatasParams)
 
         # TESTING -----------------------------------------------------
         probabilityGryff = dfWithIntercept.apply(lambda x: ds.predictionH0(weights['Gryffindor'], x), axis=1)
@@ -184,7 +167,6 @@ def main():
         print(trueResults)
         precision = trueResults.sum() / len(trueResults)
         print(f"Precision : {precision}")
-        # # TESTING -----------------------------------------------------
 
     except Exception as e:
         print(f"Error: {e}")

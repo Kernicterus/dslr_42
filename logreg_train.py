@@ -8,12 +8,12 @@ import os
 ITERATION = 100
 ROWS_NAME = [
             'Biais',
-            'First Name',
-            'Last Name',
+            # 'First Name',
+            # 'Last Name',
             'Best Hand',
-            'Year',
-            'Month',
-            'Day',
+            # 'Year',
+            # 'Month',
+            # 'Day',
             'Arithmancy',
             'Astronomy',
             'Herbology',
@@ -52,10 +52,10 @@ def saveDatas(weights : pd.Series, numDatasParams : pd.DataFrame, discreteDatasP
     Save weights into a file
     """
     weights.index = [ROWS_NAME[i] for i in weights.index]
-    weights = weights.drop(index=['First Name', 'Last Name', 'Year', 'Month', 'Day'])
-    print(discreteDatasParams)
-    discreteDatasParams = discreteDatasParams.drop(columns=['First Name', 'Last Name', 'year', 'month', 'day'])
-    print(discreteDatasParams)
+    # weights = weights.drop(index=['First Name', 'Last Name', 'Year', 'Month', 'Day'])
+    # print(discreteDatasParams)
+    # discreteDatasParams = discreteDatasParams.drop(columns=['First Name', 'Last Name', 'year', 'month', 'day'])
+    # print(discreteDatasParams)
     combined_params = {**discreteDatasParams.to_dict(), **numDatasParams.to_dict()}
     json_structure = {"data": weights.to_dict()}
     with open("training.json", "w") as file:
@@ -132,7 +132,7 @@ def main():
         
         # step 1 : load the dataset
         df = pd.read_csv(sys.argv[1])
-
+        df = df.drop(columns=['First Name', 'Last Name', 'Birthday'])
         # step 2 : drop the rows with missing values in the Hogwarts House column
         df = df.dropna(subset=['Hogwarts House'])
 
@@ -142,9 +142,11 @@ def main():
         # step 4 : extraction, numerization, filling missing values (MEAN) and standardization of discrete datas
         discreteDatas, discreteDatasParams = ds.extractAndPrepareDiscreteDatas(df)
 
+        test = pd.concat([discreteDatas, normalizedDatas], axis=1)
+        test.to_csv('test/normalizeDataInTrain.csv')
         # step 5 : regroup the datas and add the intercept
         dfWithIntercept = pd.concat([pd.Series([1] * len(df), name='intercept'), normalizedDatas, discreteDatas], axis=1)
-        
+        print(dfWithIntercept)
         # step 6: rename the columns of the dataframe with numerical indexes
         dfWithIntercept.columns = range(dfWithIntercept.shape[1])
 
@@ -182,7 +184,7 @@ def main():
         print(trueResults)
         precision = trueResults.sum() / len(trueResults)
         print(f"Precision : {precision}")
-        # TESTING -----------------------------------------------------
+        # # TESTING -----------------------------------------------------
 
     except Exception as e:
         print(f"Error: {e}")

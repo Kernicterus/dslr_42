@@ -16,7 +16,7 @@ def load_csv(path: str) -> pd.DataFrame:
     return csv
 
 def min(column: pd.Series):
-    min = column[0]
+    min = column.iloc[0]
     for value in column:
         if not pd.isna(value):
             if value < min:
@@ -24,12 +24,22 @@ def min(column: pd.Series):
     return min
 
 def max(column: pd.Series):
-    max = column[0]
+    max = column.iloc[0]
     for value in column:
         if not pd.isna(value):
             if value > max:
                 max = value
     return max
+
+def maxObj(column: pd.Series):
+    max_value = column.iloc[0]
+    max_index = column.index[0]
+    for idx, value in column.items():
+        if not pd.isna(value):
+            if value > max_value:
+                max_value = value
+                max_index = idx
+    return max_index
 
 def mean(column: pd.Series) -> float :
     """
@@ -153,9 +163,9 @@ def extractAndPrepareDiscreteDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.
     Return : a pd.DataFrame object containing the numerized datas
     """
     discreteDatas = df.select_dtypes(include=['object'])
-    discreteDatas[['year', 'month', 'day']] = discreteDatas['Birthday'].str.split('-', expand=True)
+    # discreteDatas[['year', 'month', 'day']] = discreteDatas['Birthday'].str.split('-', expand=True)
     discreteDatas = discreteDatas.drop(columns=['Hogwarts House'])
-    discreteDatas = discreteDatas.drop(columns=['Birthday'])
+    # discreteDatas = discreteDatas.drop(columns=['Birthday'])
 
     parameters = pd.DataFrame(columns=discreteDatas.columns, index=['mean', 'std', 'median'])
     discreteDatas = discreteDatas.apply(lambda x: x.astype('category').cat.codes)

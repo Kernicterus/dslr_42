@@ -148,10 +148,40 @@ def predictionH0(weights : pd.Series, dfLine : pd.Series):
         - weights must contain the weights calculated for each variable 
             + the interception at index 0 
     """
-
     if len(weights) != len(dfLine) :
         raise ValueError("The number of weights must be equal to the number")
-    if dfLine[0] != 1:
+    if dfLine['Intercept'] != 1:
         raise ValueError("The first column of the datas must be '1' for product with interception")
     thetaTx = np.dot(weights, dfLine)
     return sigmoid(thetaTx)
+
+def extractAndPrepareDiscreteDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Function that extract discrete datas and numerize them
+    Parameters : a pd.DataFrame object
+    Return : a pd.DataFrame object containing the numerized datas
+    """
+    discreteDatas = df.select_dtypes(include=['object'])
+    discreteDatas = discreteDatas.drop(columns=['Hogwarts House'], errors='ignore')
+    try:
+        discreteDatas[['Year', 'Month', 'Day']] = discreteDatas['Birthday'].str.split('-', expand=True)
+        discreteDatas = discreteDatas.drop(columns=['Birthday'])
+    except Exception:
+        pass
+    parameters = pd.DataFrame(columns=discreteDatas.columns, index=['mean', 'std', 'median'])
+    discreteDatas = discreteDatas.apply(lambda x: x.astype('category').cat.codes)
+    for column in discreteDatas.columns:
+        # CHANGER AVES NOS PROPRES FONCTIONS
+        median = discreteDatas[column].median()
+        mean = discreteDatas[column].mean()
+        std = discreteDatas[column].std()
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        discreteDatas[column] = discreteDatas[column].fillna(mean)
+        parameters[column] = [mean, std, median]
+    for column in discreteDatas.columns:
+        discreteDatas[column] = normalizePdSeries(discreteDatas[column], parameters[column])
+    print('discreteDatas', discreteDatas)
+    print('parameters', parameters)
+    return discreteDatas, parameters
+
+    

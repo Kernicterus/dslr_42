@@ -11,6 +11,17 @@ HOUSE = [
         'Hufflepuff',
         ]
 
+DISCRETE_FEATURES = [
+        'First Name',
+        'Last Name',
+        'Best Hand',
+        'Year',
+        'Month',
+        'Day',
+        ]
+
+
+
 def normalizePdSeries(variable : pd.Series, mean, std) -> pd.Series :
     """
     Function to standardize a given variable from its different values
@@ -28,10 +39,18 @@ def extractAndPrepareNumericalDatas(df : pd.DataFrame, trainingParam : pd.DataFr
     Return : a new dataFrame containing only numerical datas and a dataFrame containing 
     mean and std parameters for each variable
     """
+    try:
+        df[['Year', 'Month', 'Day']] = df['Birthday'].str.split('-', expand=True)
+        df = df.drop(columns=['Birthday'])
+    except Exception:
+        pass
     for column in df.columns:
-        df[column] = df[column].fillna(trainingParam[column]['median'])
+        if column in DISCRETE_FEATURES:
+            df[column] = df[column].fillna(trainingParam[column]['mean'])
+        else:
+            df[column] = df[column].fillna(trainingParam[column]['median'])
     for column in df.columns:
-        if (column == 'Best Hand'):
+        if column in DISCRETE_FEATURES:
             df[column] = df[column].astype('category').cat.codes
         mean = trainingParam[column]['mean']
         std = trainingParam[column]['std']
@@ -58,7 +77,7 @@ def predict(df : pd.DataFrame, weight : pd.DataFrame):
             a = 0
             for feature in row.index:
                 a += row[feature] * w[feature]
-            z = w['Biais'] + a
+            z = w['Intercept'] + a
             result[house] = ds.sigmoid(z)
         predictions.loc[index] = ds.maxObj(result)
     return predictions
@@ -71,11 +90,12 @@ def main():
         with open(sys.argv[2], 'r') as data_file:
             weight = json.load(data_file)
         entry = ds.load_csv(sys.argv[1])
-        parseEntry = entry.drop(columns=['Index', 'Hogwarts House', 'First Name', 'Last Name', 'Birthday', 'Best Hand'])
+        parseEntry = entry.drop(columns=['Index', 'Hogwarts House'])
         with open('all_parameters.json', 'r') as params_file:
             params = json.load(params_file)
         params = pd.DataFrame(params['data'])
         entryNormalized = extractAndPrepareNumericalDatas(parseEntry, params)
+        entryNormalized.to_csv('entryNoralize.csv')
         result = predict(entryNormalized, weight['data'])
         result.to_csv('houses.csv', header=['Hogwarts House'], index=True)
 

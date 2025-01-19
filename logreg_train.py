@@ -5,24 +5,27 @@ import pandas as pd
 import sys
 import os
 
-ITERATION = 100
+ITERATION = 10
 
-ROWS_NAME = [
-            'Biais',
-            'Arithmancy',
-            'Astronomy',
-            'Herbology',
-            'Defense Against the Dark Arts',
-            'Divination',
-            'Muggle Studies',
-            'Ancient Runes',
-            'History of Magic',
-            'Transfiguration',
-            'Potions',
-            'Care of Magical Creatures',
-            'Charms',
-            'Flying',
-            ]
+TRAINING_FEATURES = [
+        'First Name',
+        'Last Name',
+        'Best Hand',
+        'Birthday',
+        'Arithmancy',
+        'Astronomy',
+        'Herbology',
+        'Defense Against the Dark Arts',
+        'Divination',
+        'Muggle Studies',
+        'Ancient Runes',
+        'History of Magic',
+        'Transfiguration',
+        'Potions',
+        'Care of Magical Creatures',
+        'Charms',
+        'Flying',
+        ]
 
 def checkArgs(args : list) -> bool:
     if len(args) != 2:
@@ -42,15 +45,15 @@ def checkArgs(args : list) -> bool:
         return False
     return True
 
-def saveDatas(weights : pd.Series, numDatasParams : pd.DataFrame):
+def saveDatas(weights : pd.Series, params : pd.DataFrame):
     """
     Save weights into a file
     """
-    weights.index = [ROWS_NAME[i] for i in weights.index]
+    # weights.index = [ROWS[i] for i in weights.index]
     json_structure = {"data": weights.to_dict()}
     with open("training.json", "w") as file:
         json.dump(json_structure, file, indent=4)
-    json_structure = {"data": numDatasParams.to_dict()}
+    json_structure = {"data": params.to_dict()}
     with open("all_parameters.json", "w") as file:
         json.dump(json_structure, file, indent=4)
 
@@ -70,7 +73,7 @@ def updWeights(weights : pd.Series, dfNormalized : pd.DataFrame, alpha: float, r
     error = estimatedResults - results
     sumErrorBias = error.sum()
     for index, value in weights.items():
-        if index == 0:
+        if index == 'Intercept':
             newWeights[index] = value - alpha / nbEl * sumErrorBias
         else :
             column = dfNormalized[index]
@@ -89,8 +92,9 @@ def gradiantDescent(dfNormalized : pd.DataFrame, alpha: float, results: pd.Serie
         - a float containing the learning rate
     Return : a pd.Series containing the weights calculated
     """
-    weights = pd.Series([0.0] * len(dfNormalized.columns))
+    weights = pd.Series([0.0] * len(dfNormalized.columns), index=dfNormalized.columns)
     for iteration in range(iteration):
+        print(results)
         weights = updWeights(weights, dfNormalized, alpha, results, len(dfNormalized))
     return weights
 
@@ -120,23 +124,25 @@ def main():
         
         # step 1 : load the dataset
         df = pd.read_csv(sys.argv[1])
-        df = df.drop(columns=['First Name', 'Last Name', 'Birthday', 'Best Hand'])
+        df = df[['Index'] + ['Hogwarts House'] + TRAINING_FEATURES]
+
         # step 2 : drop the rows with missing values in the Hogwarts House column
         df = df.dropna(subset=['Hogwarts House'])
 
         # step 3 : extraction, numerization, filling missing values (MEDIAN) and  standardization of numerical datas
         normalizedDatas, numDatasParams = ds.extractAndPrepareNumericalDatas(df)
 
+        # step 4 : extraction, numerization, filling missing values (MEAN) and standardization of discrete datas
+        discreteDatas, discreteDatasParams = ds.extractAndPrepareDiscreteDatas(df)
+
         # step 5 : regroup the datas and add the intercept
-        dfWithIntercept = pd.concat([pd.Series([1] * len(df), name='intercept'), normalizedDatas], axis=1)
+        dfWithIntercept = pd.concat([pd.Series([1] * len(df), name='Intercept'), discreteDatas, normalizedDatas], axis=1)
+        params =pd.concat([discreteDatasParams, numDatasParams], axis=1)
 
-        # step 6: rename the columns of the dataframe with numerical indexes
-        dfWithIntercept.columns = range(dfWithIntercept.shape[1])
-
-        # step 7 : prepare the results for each classifier (0 or 1) : one vs all technique
+        # step 6 : prepare the results for each classifier (0 or 1) : one vs all technique
         results = prepareResults(df)
 
-        # step 8 : calculate the weights for each classifier
+        # step 7 : calculate the weights for each classifier
         weightsGryff = gradiantDescent(dfWithIntercept, 0.1, results['Gryffindor'], ITERATION)
         weightsSlyth = gradiantDescent(dfWithIntercept, 0.1, results['Slytherin'], ITERATION)
         weightsRaven = gradiantDescent(dfWithIntercept, 0.1, results['Ravenclaw'], ITERATION)
@@ -144,10 +150,10 @@ def main():
         weights = pd.concat([weightsGryff, weightsSlyth, weightsRaven, weightsHuffl], axis=1)
         weights.columns = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
 
-        # step 9 : save the weights and the parameters
-        saveDatas(weights, numDatasParams)
+        # step 8 : save the weights and the parameters
+        saveDatas(weights, params)
 
-        # TESTING -----------------------------------------------------
+        # # TESTING -----------------------------------------------------
         probabilityGryff = dfWithIntercept.apply(lambda x: ds.predictionH0(weights['Gryffindor'], x), axis=1)
         probabilitySlyth = dfWithIntercept.apply(lambda x: ds.predictionH0(weights['Slytherin'], x), axis=1)
         probabilityRaven = dfWithIntercept.apply(lambda x: ds.predictionH0(weights['Ravenclaw'], x), axis=1)

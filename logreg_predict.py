@@ -95,10 +95,11 @@ def main():
             params = json.load(params_file)
         params = pd.DataFrame(params['data'])
         entryNormalized = extractAndPrepareNumericalDatas(parseEntry, params)
-        entryNormalized.to_csv('entryNoralize.csv')
         result = predict(entryNormalized, weight['data'])
-        result.to_csv('houses.csv', header=['Hogwarts House'], index=True)
 
+        result.to_csv('houses.csv', header=['Hogwarts House'], index=True)
+        compare = entry['Hogwarts House'].eq(result)
+        print("Precision = ", (compare.sum() / len(compare)) * 100)
     except Exception as e:
         print(f"Error: {e}")
 

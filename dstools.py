@@ -180,8 +180,6 @@ def extractAndPrepareDiscreteDatas(df : pd.DataFrame) -> tuple[pd.DataFrame, pd.
         parameters[column] = [mean, std, median]
     for column in discreteDatas.columns:
         discreteDatas[column] = normalizePdSeries(discreteDatas[column], parameters[column])
-    print('discreteDatas', discreteDatas)
-    print('parameters', parameters)
     return discreteDatas, parameters
 
     

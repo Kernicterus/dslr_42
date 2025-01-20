@@ -5,7 +5,7 @@ import pandas as pd
 import sys
 import os
 
-ITERATION = 10
+ITERATION = 1
 
 TRAINING_FEATURES = [
         'First Name',
@@ -94,7 +94,6 @@ def gradiantDescent(dfNormalized : pd.DataFrame, alpha: float, results: pd.Serie
     """
     weights = pd.Series([0.0] * len(dfNormalized.columns), index=dfNormalized.columns)
     for iteration in range(iteration):
-        print(results)
         weights = updWeights(weights, dfNormalized, alpha, results, len(dfNormalized))
     return weights
 
@@ -169,8 +168,6 @@ def main():
         }        
         estimatedResults = estimatedResults.map(house_mapping)
         trueResults = (estimatedResults == df['Hogwarts House']).astype(int)
-        print("True results :")
-        print(trueResults)
         precision = trueResults.sum() / len(trueResults)
         print(f"Precision : {precision}")
 

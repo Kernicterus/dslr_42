@@ -86,6 +86,7 @@ def predict(df : pd.DataFrame, weight : pd.DataFrame):
 def main():
     try :
         if len(sys.argv) != 3:
+            print('Error : dataset to predict and weight.json needed')
             return 1
         with open(sys.argv[2], 'r') as data_file:
             weight = json.load(data_file)

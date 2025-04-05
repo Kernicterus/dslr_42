@@ -28,6 +28,22 @@ TRAINING_FEATURES = [
         ]
 
 def checkArgs(args : list) -> bool:
+    """
+    Validates command line arguments for the training script.
+    
+    Parameters:
+        args (list): Command line arguments list from sys.argv
+        
+    Returns:
+        bool: True if all validations pass, False otherwise
+        
+    Checks:
+        - Correct number of arguments
+        - CSV file extension
+        - File existence
+        - File readability
+        - Non-empty file content
+    """
     if len(args) != 2:
         print("Error: wrong number of arguments")
         return False
@@ -47,9 +63,16 @@ def checkArgs(args : list) -> bool:
 
 def saveDatas(weights : pd.Series, params : pd.DataFrame):
     """
-    Save weights into a file
+    Saves model weights and parameters to JSON files.
+    
+    Creates two files:
+        - training.json: Contains the weights for each Hogwarts house classifier
+        - all_parameters.json: Contains the parameters used for data normalization
+    
+    Parameters:
+        weights (pd.Series): Model weights for each feature across all houses
+        params (pd.DataFrame): Statistical parameters used for data normalization
     """
-    # weights.index = [ROWS[i] for i in weights.index]
     json_structure = {"data": weights.to_dict()}
     with open("training.json", "w") as file:
         json.dump(json_structure, file, indent=4)
@@ -60,12 +83,25 @@ def saveDatas(weights : pd.Series, params : pd.DataFrame):
 
 def updWeights(weights : pd.Series, dfNormalized : pd.DataFrame, alpha: float, results: pd.Series, nbEl : int) -> pd.Series:
     """
-    Function that updates the weights
-    Parameters : 
-        - a pd.Series containing the weights
-        - a pd.DataFrame containing the normalized datas
-        - a float containing the learning rate
-    Return : a pd.Series containing the updated weights
+    Updates weights using gradient descent for logistic regression.
+    
+    Implementation of gradient descent update step for a single iteration:
+    1. Calculates predictions using current weights
+    2. Computes the error between predictions and actual values
+    3. Updates weights based on the error and learning rate
+    
+    Parameters:
+        weights (pd.Series): Current weights for each feature
+        dfNormalized (pd.DataFrame): Normalized feature data
+        alpha (float): Learning rate for gradient descent
+        results (pd.Series): Target values (0 or 1) for current house
+        nbEl (int): Number of training examples
+        
+    Returns:
+        pd.Series: Updated weights after one iteration of gradient descent
+        
+    Raises:
+        ValueError: If dimensions of column and error don't match
     """
     newWeights = weights.copy()
     estimatedResults = pd.Series([0] * len(results))
@@ -86,11 +122,21 @@ def updWeights(weights : pd.Series, dfNormalized : pd.DataFrame, alpha: float, r
 
 def gradiantDescent(dfNormalized : pd.DataFrame, alpha: float, results: pd.Series, iteration : int) -> pd.Series:
     """
-    Function that calculates the gradiant descent
-    Parameters : 
-        - a pd.DataFrame containing the normalized datas
-        - a float containing the learning rate
-    Return : a pd.Series containing the weights calculated
+    Performs gradient descent to find optimal weights for logistic regression.
+    
+    This function:
+    1. Initializes weights to zero
+    2. Iteratively updates weights using the updWeights function
+    3. Continues for a specified number of iterations
+    
+    Parameters:
+        dfNormalized (pd.DataFrame): Normalized feature data with intercept term
+        alpha (float): Learning rate for gradient descent
+        results (pd.Series): Target values (0 or 1) for current house
+        iteration (int): Number of iterations to run gradient descent
+        
+    Returns:
+        pd.Series: Optimized weights for logistic regression model
     """
     weights = pd.Series([0.0] * len(dfNormalized.columns), index=dfNormalized.columns)
     for iteration in range(iteration):
@@ -99,10 +145,17 @@ def gradiantDescent(dfNormalized : pd.DataFrame, alpha: float, results: pd.Serie
 
 def prepareResults(df : pd.DataFrame) -> pd.DataFrame:
     """
-    Function that prepares the results for each classifier
-    1 for the house, 0 for the others
-    Parameters : a pd.DataFrame object
-    Return : a pd.DataFrame object containing the results for each classifier (1 or 0)
+    Prepares target values for one-vs-all logistic regression classifiers.
+    
+    Creates binary classifiers for each Hogwarts house:
+    - For each house, creates a column where students in that house get a 1, others get 0
+    - Implements the "one-vs-all" technique for multi-class classification
+    
+    Parameters:
+        df (pd.DataFrame): DataFrame with 'Hogwarts House' column
+        
+    Returns:
+        pd.DataFrame: DataFrame with binary columns for each house (Gryffindor, Slytherin, Ravenclaw, Hufflepuff)
     """
     gryff = df['Hogwarts House'].apply(lambda x: 1 if x == 'Gryffindor' else 0)
     slyth = df['Hogwarts House'].apply(lambda x: 1 if x == 'Slytherin' else 0)
@@ -117,8 +170,29 @@ def prepareResults(df : pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
+    """
+    Main function that executes the logistic regression training pipeline.
+    
+    Steps:
+    1. Validate command line arguments
+    2. Load and preprocess the dataset
+    3. Extract and normalize numerical and categorical features
+    4. Add intercept term and prepare training data
+    5. Create one-vs-all target values for each house
+    6. Train logistic regression model for each house
+    7. Save model weights and parameters
+    8. Evaluate model accuracy on training data
+    
+    Returns:
+        int: 1 if error in arguments, None otherwise
+    
+    Side effects:
+        - Creates training.json and all_parameters.json files
+        - Prints model accuracy
+    """
     try :
         if checkArgs(sys.argv) == False:
+            print("Usage: python logreg_train.py <dataset.csv>")
             return 1
         
         # step 1 : load the dataset
@@ -169,7 +243,7 @@ def main():
         estimatedResults = estimatedResults.map(house_mapping)
         trueResults = (estimatedResults == df['Hogwarts House']).astype(int)
         precision = trueResults.sum() / len(trueResults)
-        print(f"Precision : {precision}")
+        print(f"Accuracy : {precision}")
 
     except Exception as e:
         print(f"Error: {e}")
